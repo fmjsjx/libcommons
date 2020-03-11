@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceAutoConfiguration
