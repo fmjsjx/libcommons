@@ -10,28 +10,28 @@ public interface JsonLibrary<JSON> {
         return src.getBytes(StandardCharsets.UTF_8);
     }
 
-    <T extends JSON> T loads(byte[] src);
+    <T extends JSON> T loads(byte[] src) throws JsonException;
 
-    default <T extends JSON> T loads(String src) {
+    default <T extends JSON> T loads(String src) throws JsonException {
         return loads(toBytes(src));
     }
 
-    <T> T loads(byte[] src, Class<T> type);
+    <T> T loads(byte[] src, Class<T> type) throws JsonException;
 
-    default <T> T loads(String src, Class<T> type) {
+    default <T> T loads(String src, Class<T> type) throws JsonException {
         return loads(toBytes(src), type);
     }
 
-    <T> T loads(byte[] src, Type type);
+    <T> T loads(byte[] src, Type type) throws JsonException;
 
-    default <T> T loads(String src, Type type) {
+    default <T> T loads(String src, Type type) throws JsonException {
         return loads(toBytes(src), type);
     }
 
-    byte[] dumpsToBytes(Object obj);
+    byte[] dumpsToBytes(Object obj) throws JsonException;
 
-    String dumpsToString(Object obj);
+    String dumpsToString(Object obj) throws JsonException;
 
-    void dumps(Object obj, OutputStream out);
+    void dumps(Object obj, OutputStream out) throws JsonException;
 
 }
