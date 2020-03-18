@@ -3,10 +3,13 @@ package com.github.fmjsjx.libcommons.json;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
+import java.util.Map;
 
 import com.dslplatform.json.DslJson;
+import com.dslplatform.json.runtime.Settings;
+import com.dslplatform.json.runtime.TypeDefinition;
 
-public class DsljsonLibrary implements JsonLibrary<Object> {
+public class DsljsonLibrary implements JsonLibrary<Map<String, ?>> {
 	
     public static final class DsljsonException extends JsonException {
 
@@ -37,7 +40,7 @@ public class DsljsonLibrary implements JsonLibrary<Object> {
 	}
 
     private static final DslJson<Object> defaultDslJson() {
-    	var json = new DslJson<Object>();
+    	var json = new DslJson<Object>(Settings.basicSetup());
 		return json;
 	}
 
@@ -50,8 +53,13 @@ public class DsljsonLibrary implements JsonLibrary<Object> {
 	}
 	
 	@Override
-    public <T extends Object> T loads(byte[] src) {
-		throw new UnsupportedOperationException();
+	@SuppressWarnings("unchecked")
+    public <T extends Map<String, ?>> T loads(byte[] src) throws DsljsonException {
+		try {
+			return (T) dslJson.deserialize(Map.class, src, src.length);
+		} catch (IOException e) {
+			throw new DsljsonException(e);
+		}
     }
 
     @Override
@@ -72,6 +80,14 @@ public class DsljsonLibrary implements JsonLibrary<Object> {
 			throw new DsljsonException(e);
 		}
     }
+	
+	public <T> T loads(byte[] src, TypeDefinition<T> typeDefinition) throws DsljsonException {
+		return loads(src, typeDefinition.type);
+	}
+	
+	public <T> T loads(String src, TypeDefinition<T> typeDefinition) throws DsljsonException {
+		return loads(src, typeDefinition.type);
+	}
 
     @Override
     public byte[] dumpsToBytes(Object obj) throws DsljsonException {
