@@ -1,6 +1,12 @@
 package com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis;
 
+import java.util.function.Supplier;
+
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.FatalBeanException;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -17,10 +23,12 @@ import org.springframework.core.env.Environment;
 
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.EnvironmentUtil;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.EnvironmentUtilAutoConfiguration;
-import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisClientConnectionProperties;
+import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisConnectionProperties;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisClientProperties;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisConnectionCodec;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisConnectionType;
+import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisPoolMode;
+import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisPoolProperties;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -28,7 +36,12 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.support.AsyncConnectionPoolSupport;
+import io.lettuce.core.support.AsyncPool;
+import io.lettuce.core.support.BoundedPoolConfig;
+import io.lettuce.core.support.ConnectionPoolSupport;
 
 @Configuration
 @ConditionalOnClass(RedisClient.class)
@@ -62,8 +75,11 @@ public class LettuceAutoConfiguration {
 
         private void registerBeans(RedisClientProperties properties) throws BeansException {
             RedisClient client = registerClientBean(properties);
-            for (RedisClientConnectionProperties connectionProperties : properties.getConnections()) {
+            for (RedisConnectionProperties connectionProperties : properties.getConnections()) {
                 registerConnectionBean(client, connectionProperties);
+            }
+            for (RedisPoolProperties poolProperties : properties.getPools()) {
+                registerPoolBean(client, poolProperties);
             }
         }
 
@@ -86,20 +102,26 @@ public class LettuceAutoConfiguration {
             return client;
         }
 
-        private void registerConnectionBean(RedisClient client, RedisClientConnectionProperties properties)
+        private void registerConnectionBean(RedisClient client, RedisConnectionProperties properties)
                 throws BeansException {
             String beanName = properties.getName() + "RedisConnection";
             RedisURI uri = createUri(properties);
             RedisCodec<?, ?> codec = getRedisCodec(properties.getCodec());
             if (properties.getType() == RedisConnectionType.NORMAL) {
-                registry.registerBeanDefinition(redisClientBeanName(),
-                        BeanDefinitionBuilder
-                                .genericBeanDefinition(StatefulRedisConnection.class, () -> client.connect(codec, uri))
-                                .addDependsOn(beanName).getBeanDefinition());
+                BeanDefinition beanDefinition = BeanDefinitionBuilder
+                        .genericBeanDefinition(StatefulRedisConnection.class, () -> client.connect(codec, uri))
+                        .addDependsOn(redisClientBeanName()).getBeanDefinition();
+                registry.registerBeanDefinition(beanName, beanDefinition);
+            } else if (properties.getType() == RedisConnectionType.PUBSUB) {
+                BeanDefinition beanDefinition = BeanDefinitionBuilder
+                        .genericBeanDefinition(StatefulRedisPubSubConnection.class,
+                                () -> client.connectPubSub(codec, uri))
+                        .addDependsOn(redisClientBeanName()).getBeanDefinition();
+                registry.registerBeanDefinition(beanName, beanDefinition);
             }
         }
 
-        private static final RedisURI createUri(RedisClientConnectionProperties properties) {
+        private static final RedisURI createUri(RedisConnectionProperties properties) {
             var uri = properties.getUri();
             if (uri != null) {
                 return RedisURI.create(uri);
@@ -125,6 +147,61 @@ public class LettuceAutoConfiguration {
             }
         }
 
+        private void registerPoolBean(RedisClient client, RedisPoolProperties properties) throws BeansException {
+            String beanName = properties.getName() + "RedisPool";
+            if (properties.getType() != RedisConnectionType.NORMAL) {
+                throw new FatalBeanException("Redis connection type must be normal for pools");
+            }
+            RedisURI uri = createUri(properties);
+            RedisCodec<?, ?> codec = getRedisCodec(properties.getCodec());
+            if (properties.getMode() == RedisPoolMode.ASYNC) {
+                BoundedPoolConfig config = buildBoundedPoolConfig(properties);
+                BeanDefinition beanDefinition = BeanDefinitionBuilder
+                        .genericBeanDefinition(AsyncPool.class,
+                                () -> AsyncConnectionPoolSupport
+                                        .createBoundedObjectPool(() -> client.connectAsync(codec, uri), config))
+                        .addDependsOn(redisClientBeanName()).getBeanDefinition();
+                registry.registerBeanDefinition(beanName, beanDefinition);
+            } else {
+                Supplier<StatefulRedisConnection<?, ?>> connectionSupplier = () -> client.connect(codec, uri);
+                GenericObjectPoolConfig<StatefulRedisConnection<?, ?>> config = buildGenericPoolConfig(properties);
+                BeanDefinition beanDefinition = BeanDefinitionBuilder
+                        .genericBeanDefinition(GenericObjectPool.class,
+                                () -> ConnectionPoolSupport.createGenericObjectPool(connectionSupplier, config))
+                        .setDestroyMethodName("close").addDependsOn(redisClientBeanName()).getBeanDefinition();
+                registry.registerBeanDefinition(beanName, beanDefinition);
+            }
+        }
+
+        private static final BoundedPoolConfig buildBoundedPoolConfig(RedisPoolProperties properties) {
+            BoundedPoolConfig.Builder builder = BoundedPoolConfig.builder();
+            if (properties.getMaxTotal() > 0) {
+                builder.maxTotal(properties.getMaxTotal());
+            }
+            if (properties.getMaxIdle() > 0) {
+                builder.maxIdle(properties.getMaxIdle());
+            }
+            if (properties.getMinIdle() > 0) {
+                builder.minIdle(properties.getMinIdle());
+            }
+            BoundedPoolConfig config = builder.build();
+            return config;
+        }
+
+        private static final GenericObjectPoolConfig<StatefulRedisConnection<?, ?>> buildGenericPoolConfig(
+                RedisPoolProperties properties) {
+            GenericObjectPoolConfig<StatefulRedisConnection<?, ?>> config = new GenericObjectPoolConfig<>();
+            if (properties.getMaxTotal() > 0) {
+                config.setMaxTotal(properties.getMaxTotal());
+            }
+            if (properties.getMaxIdle() > 0) {
+                config.setMaxIdle(properties.getMaxIdle());
+            }
+            if (properties.getMinIdle() > 0) {
+                config.setMinIdle(properties.getMinIdle());
+            }
+            return config;
+        }
     }
 
 }

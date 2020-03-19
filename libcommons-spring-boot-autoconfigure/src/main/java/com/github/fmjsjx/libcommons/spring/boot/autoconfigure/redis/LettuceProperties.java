@@ -16,7 +16,7 @@ import lombok.ToString;
 @ToString
 @ConfigurationProperties("libcommons.redis.lettuce")
 public class LettuceProperties {
-    
+
     private RedisClientProperties client;
 
     @Setter
@@ -25,17 +25,19 @@ public class LettuceProperties {
     public static class RedisClientProperties {
 
         private int ioThreads;
-        
+
         private int computationThreads;
 
-        private List<RedisClientConnectionProperties> connections = Collections.emptyList();
+        private List<RedisConnectionProperties> connections = Collections.emptyList();
+
+        private List<RedisPoolProperties> pools = Collections.emptyList();
 
     }
 
     @Getter
     @Setter
     @ToString
-    public static class RedisClientConnectionProperties {
+    public static class RedisConnectionProperties {
 
         @NonNull
         private String name;
@@ -61,6 +63,22 @@ public class LettuceProperties {
 
     }
 
+    @Getter
+    @Setter
+    @ToString(callSuper = true)
+    public static class RedisPoolProperties extends RedisConnectionProperties {
+
+        /**
+         * Default is sync
+         */
+        private RedisPoolMode mode = RedisPoolMode.SYNC;
+
+        private int maxTotal;
+        private int maxIdle;
+        private int minIdle;
+
+    }
+
     public enum RedisConnectionType {
 
         NORMAL, PUBSUB
@@ -68,7 +86,15 @@ public class LettuceProperties {
     }
 
     public enum RedisConnectionCodec {
+
         UTF8, ASCII, BYTE_ARRAY
+
+    }
+
+    public enum RedisPoolMode {
+
+        SYNC, ASYNC
+
     }
 
 }
