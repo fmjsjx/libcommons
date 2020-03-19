@@ -16,6 +16,8 @@ import lombok.ToString;
 @ToString
 @ConfigurationProperties("libcommons.redis.lettuce")
 public class LettuceProperties {
+    
+    private RedisClientProperties client;
 
     @Setter
     @Getter
@@ -23,6 +25,8 @@ public class LettuceProperties {
     public static class RedisClientProperties {
 
         private int ioThreads;
+        
+        private int computationThreads;
 
         private List<RedisClientConnectionProperties> connections = Collections.emptyList();
 
@@ -53,7 +57,7 @@ public class LettuceProperties {
         /**
          * Default is utf8
          */
-        private RedisConnectionCodec valueCodec = RedisConnectionCodec.UTF8;
+        private RedisConnectionCodec codec = RedisConnectionCodec.UTF8;
 
     }
 
@@ -64,7 +68,7 @@ public class LettuceProperties {
     }
 
     public enum RedisConnectionCodec {
-        UTF8, ASCII, ByteArray
+        UTF8, ASCII, BYTE_ARRAY
     }
 
 }
