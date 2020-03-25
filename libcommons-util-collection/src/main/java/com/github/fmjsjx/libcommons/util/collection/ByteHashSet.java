@@ -1,42 +1,40 @@
 package com.github.fmjsjx.libcommons.util.collection;
 
 import static com.github.fmjsjx.libcommons.util.collection.IntHashSet.PRESENT;
-
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.function.LongConsumer;
-import java.util.stream.LongStream;
-import java.util.stream.StreamSupport;
 
-import io.netty.util.collection.LongObjectHashMap;
-import io.netty.util.collection.LongObjectMap.PrimitiveEntry;
+import com.github.fmjsjx.libcommons.util.function.ByteConsumer;
 
-public class LongHashSet implements LongSet {
+import io.netty.util.collection.ByteObjectHashMap;
+import io.netty.util.collection.ByteObjectMap.PrimitiveEntry;
 
-    private final LongObjectHashMap<Object> map;
+public class ByteHashSet implements ByteSet {
 
-    public LongHashSet() {
-        map = new LongObjectHashMap<>();
+    private final ByteObjectHashMap<Object> map;
+
+    public ByteHashSet() {
+        map = new ByteObjectHashMap<Object>();
     }
 
-    public LongHashSet(Collection<? extends Long> c) {
-        this(Math.max((int) (c.size() / .75f) + 1, 16));
-        addAll(c);
+    public ByteHashSet(int initialCapacity) {
+        map = new ByteObjectHashMap<>(initialCapacity);
     }
 
-    public LongHashSet(long... array) {
+    public ByteHashSet(int initialCapacity, float loadFactor) {
+        map = new ByteObjectHashMap<>(initialCapacity, loadFactor);
+    }
+
+    public ByteHashSet(byte... array) {
         this(Math.max((int) (array.length / .75f) + 1, 16));
-        for (long v : array) {
+        for (byte v : array) {
             add(v);
         }
     }
 
-    public LongHashSet(int initialCapacity) {
-        map = new LongObjectHashMap<>(initialCapacity);
-    }
-
-    public LongHashSet(int initialCapacity, float loadFactor) {
-        map = new LongObjectHashMap<>(initialCapacity, loadFactor);
+    public ByteHashSet(Collection<? extends Byte> c) {
+        this(Math.max((int) (c.size() / .75f) + 1, 16));
+        addAll(c);
     }
 
     @Override
@@ -55,7 +53,7 @@ public class LongHashSet implements LongSet {
     }
 
     @Override
-    public Iterator<Long> iterator() {
+    public Iterator<Byte> iterator() {
         return map.keySet().iterator();
     }
 
@@ -70,7 +68,7 @@ public class LongHashSet implements LongSet {
     }
 
     @Override
-    public boolean add(Long e) {
+    public boolean add(Byte e) {
         return map.put(e, PRESENT) == null;
     }
 
@@ -95,35 +93,36 @@ public class LongHashSet implements LongSet {
     }
 
     @Override
-    public boolean contains(long v) {
+    public boolean contains(byte v) {
         return map.containsKey(v);
     }
 
     @Override
-    public boolean add(long v) {
+    public boolean add(byte v) {
         return map.put(v, PRESENT) == null;
     }
 
     @Override
-    public boolean remove(long v) {
+    public boolean remove(byte v) {
         return map.remove(v) == PRESENT;
     }
 
     @Override
-    public LongStream longStream() {
-        return StreamSupport.stream(map.entries().spliterator(), false).mapToLong(PrimitiveEntry::key);
+    public byte[] toByteArray() {
+        byte[] b = new byte[size()];
+        int i = 0;
+        for (Byte v : map.keySet()) {
+            b[i] = v.byteValue();
+            i++;
+        }
+        return b;
     }
 
     @Override
-    public void forEach(LongConsumer action) {
+    public void forEach(ByteConsumer action) {
         for (PrimitiveEntry<Object> entry : map.entries()) {
             action.accept(entry.key());
         }
-    }
-
-    @Override
-    public String toString() {
-        return map.keySet().toString();
     }
 
 }

@@ -61,7 +61,7 @@ public class IntHashSet implements IntSet {
 
     @Override
     public void forEach(IntConsumer action) {
-        for (var entry : map.entries()) {
+        for (PrimitiveEntry<Object> entry : map.entries()) {
             action.accept(entry.key());
         }
     }
