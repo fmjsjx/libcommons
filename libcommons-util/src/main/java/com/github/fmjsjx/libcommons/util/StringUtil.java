@@ -22,6 +22,46 @@ public class StringUtil {
         return !isEmpty(value);
     }
 
-    // TODO
-    
+    public static final boolean isNumberic(String value) {
+        if (isBlank(value)) {
+            return false;
+        }
+        char[] chars = value.toCharArray();
+        for (int i = chars.length - 1; i >= 0; i--) {
+            if (chars[i] < '0' || chars[i] > '9') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static final String[] split(String value, String regex, int limit) {
+        if (value == null) {
+            return null;
+        }
+        return value.split(regex, limit);
+    }
+
+    public static final String[] split(String value, String regex) {
+        return split(value, regex, 0);
+    }
+
+    public static final int[] splitInt(String value, String regex) {
+        String[] strings = value.split(regex);
+        int[] values = new int[strings.length];
+        for (int i = 0; i < values.length; i++) {
+            values[i] = Integer.parseInt(strings[i]);
+        }
+        return values;
+    }
+
+    public static final long[] splitLong(String value, String regex) {
+        String[] strings = value.split(regex);
+        long[] values = new long[strings.length];
+        for (int i = 0; i < values.length; i++) {
+            values[i] = Long.parseLong(strings[i]);
+        }
+        return values;
+    }
+
 }
