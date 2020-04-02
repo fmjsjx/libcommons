@@ -64,4 +64,20 @@ public class StringUtil {
         return values;
     }
 
+    public static final boolean toBoolean(String value) {
+        if (value == null) {
+            return false;
+        }
+        switch (value) {
+        case "true":
+            return true;
+        case "TRUE":
+            return true;
+        case "1":
+            return true;
+        default:
+            return false;
+        }
+    }
+
 }
