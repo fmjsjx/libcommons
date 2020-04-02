@@ -42,6 +42,8 @@ import io.lettuce.core.support.AsyncConnectionPoolSupport;
 import io.lettuce.core.support.AsyncPool;
 import io.lettuce.core.support.BoundedPoolConfig;
 import io.lettuce.core.support.ConnectionPoolSupport;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 @Configuration
 @ConditionalOnClass(RedisClient.class)
@@ -51,11 +53,12 @@ import io.lettuce.core.support.ConnectionPoolSupport;
 public class LettuceAutoConfiguration {
 
     @Bean
-    public static final ConnectionRegisteryProcessor connectionRegisteryProcessor() {
-        return new ConnectionRegisteryProcessor();
+    public static final LettuceRegisteryProcessor lettuceRegisteryProcessor() {
+        return new LettuceRegisteryProcessor();
     }
 
-    public static final class ConnectionRegisteryProcessor implements BeanDefinitionRegistryPostProcessor {
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class LettuceRegisteryProcessor implements BeanDefinitionRegistryPostProcessor {
 
         private BeanDefinitionRegistry registry;
 
