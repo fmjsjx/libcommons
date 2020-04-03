@@ -11,21 +11,19 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.context.properties.bind.BindResult;
 import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
-import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.EnvironmentUtil;
-import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.EnvironmentUtilAutoConfiguration;
-import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisConnectionProperties;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisClientProperties;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisConnectionCodec;
+import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisConnectionProperties;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisConnectionType;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisPoolMode;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceProperties.RedisPoolProperties;
@@ -49,7 +47,6 @@ import lombok.NoArgsConstructor;
 @ConditionalOnClass(RedisClient.class)
 @ConditionalOnMissingBean(RedisClient.class)
 @EnableConfigurationProperties(LettuceProperties.class)
-@AutoConfigureAfter(EnvironmentUtilAutoConfiguration.class)
 public class LettuceAutoConfiguration {
 
     @Bean
@@ -58,9 +55,15 @@ public class LettuceAutoConfiguration {
     }
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
-    public static final class LettuceRegisteryProcessor implements BeanDefinitionRegistryPostProcessor {
+    public static final class LettuceRegisteryProcessor implements BeanDefinitionRegistryPostProcessor, EnvironmentAware {
 
+        private Environment environment;
         private BeanDefinitionRegistry registry;
+
+        @Override
+        public void setEnvironment(Environment environment) {
+            this.environment = environment;
+        }
 
         @Override
         public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
@@ -70,8 +73,7 @@ public class LettuceAutoConfiguration {
         @Override
         public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
             this.registry = registry;
-            Environment env = EnvironmentUtil.getInstance().getEnvironment();
-            BindResult<RedisClientProperties> bindResult = Binder.get(env).bind("libcommons.redis.lettuce.client",
+            BindResult<RedisClientProperties> bindResult = Binder.get(environment).bind("libcommons.redis.lettuce.client",
                     RedisClientProperties.class);
             bindResult.ifBound(this::registerBeans);
         }
@@ -205,6 +207,7 @@ public class LettuceAutoConfiguration {
             }
             return config;
         }
+
     }
 
 }
