@@ -65,7 +65,7 @@ public class DigestUtil {
     }
 
     public static final DigestUtil md5Instance() {
-        return MD5Holder.threadLocalInstance.get();
+        return MD5Holder.getInstance();
     }
 
     public static final byte[] md5(String input) {
@@ -93,7 +93,7 @@ public class DigestUtil {
     }
 
     public static final DigestUtil sha1Instance() {
-        return Sha1Holder.threadLocalInstance.get();
+        return Sha1Holder.getInstance();
     }
 
     public static final byte[] sha1(String input) {
@@ -121,7 +121,7 @@ public class DigestUtil {
     }
 
     public static final DigestUtil sha256Instance() {
-        return Sha256Holder.threadLocalInstance.get();
+        return Sha256Holder.getInstance();
     }
 
     public static final byte[] sha256(String input) {
@@ -149,15 +149,33 @@ public class DigestUtil {
     }
 
     private static final class MD5Holder {
+
         private static final ThreadLocalUtil threadLocalInstance = new ThreadLocalUtil(DigestAlgorithm.MD5);
+
+        private static final DigestUtil getInstance() {
+            return threadLocalInstance.get();
+        }
+
     }
 
     private static final class Sha1Holder {
+
         private static final ThreadLocalUtil threadLocalInstance = new ThreadLocalUtil(DigestAlgorithm.SHA1);
+
+        private static final DigestUtil getInstance() {
+            return threadLocalInstance.get();
+        }
+
     }
 
     private static final class Sha256Holder {
+
         private static final ThreadLocalUtil threadLocalInstance = new ThreadLocalUtil(DigestAlgorithm.SHA256);
+
+        private static final DigestUtil getInstance() {
+            return threadLocalInstance.get();
+        }
+
     }
 
     private static final class ThreadLocalUtil extends ThreadLocal<DigestUtil> {
@@ -186,23 +204,27 @@ public class DigestUtil {
     }
 
     public byte[] digest(byte[] input, byte[]... otherInputs) {
-        digest.update(input);
-        for (byte[] otherInput : otherInputs) {
-            digest.update(otherInput);
+        try {
+            digest.update(input);
+            for (byte[] otherInput : otherInputs) {
+                digest.update(otherInput);
+            }
+            return digest.digest();
+        } finally {
+            digest.reset();
         }
-        byte[] out = digest.digest();
-        digest.reset();
-        return out;
     }
 
     public byte[] digest(ByteBuffer input, ByteBuffer... otherInputs) {
-        digest.update(input);
-        for (ByteBuffer otherInput : otherInputs) {
-            digest.update(otherInput);
+        try {
+            digest.update(input);
+            for (ByteBuffer otherInput : otherInputs) {
+                digest.update(otherInput);
+            }
+            return digest.digest();
+        } finally {
+            digest.reset();
         }
-        byte[] out = digest.digest();
-        digest.reset();
-        return out;
     }
 
     public String digestAsHex(byte[] input, byte[]... otherInputs) {
