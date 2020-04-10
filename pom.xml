@@ -19,6 +19,7 @@
     <module>libcommons-spring-boot-starters</module>
     <module>libcommons-util</module>
     <module>libcommons-util-collection</module>
+    <module>libcommons-util-redis-lettuce</module>
   </modules>
 
   <properties>

@@ -13,8 +13,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.lettuce</groupId>
-      <artifactId>lettuce-core</artifactId>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>libcommons-util-redis-lettuce</artifactId>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 
