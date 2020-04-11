@@ -1,12 +1,13 @@
 package com.github.fmjsjx.libcommons.util.redis.lettuce;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.github.fmjsjx.libcommons.util.redis.LuaScript;
@@ -18,6 +19,7 @@ import io.lettuce.core.ScanCursor;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.output.KeyStreamingChannel;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -72,77 +74,85 @@ public final class RedisUtil {
         }).thenCompose(r -> r);
     }
 
-    public static final <K, V> void scanForEach(RedisCommands<K, V> redis, BiConsumer<RedisCommands<K, V>, K> action) {
-        Objects.requireNonNull(action, "action must not be null");
-        var cursor = redis.scan();
-        for (;;) {
-            for (K key : cursor.getKeys()) {
-                action.accept(redis, key);
-            }
-            if (cursor.isFinished()) {
-                break;
-            } else {
-                cursor = redis.scan(cursor);
-            }
-        }
+    public static final <K, V> void scanForEach(RedisCommands<K, V> redis, Consumer<K> action) {
+        scanForEach(redis, null, action);
     }
 
-    public static final <K, V> void scanForEach(RedisCommands<K, V> redis, ScanArgs scanArgs,
-            BiConsumer<RedisCommands<K, V>, K> action) {
+    public static final <K, V> void scanForEach(RedisCommands<K, V> redis, ScanArgs scanArgs, Consumer<K> action) {
+        scanForEach0(redis, scanArgs, action, false);
+    }
+
+    static final <K, V> void scanForEach0(RedisCommands<K, V> redis, ScanArgs scanArgs, Consumer<K> action,
+            boolean useStreamChannel) {
         Objects.requireNonNull(action, "action must not be null");
-        var cursor = redis.scan(scanArgs);
-        for (;;) {
-            doActionForEachKey(redis, action, cursor);
-            if (cursor.isFinished()) {
-                break;
-            } else {
+        if (useStreamChannel) {
+            KeyStreamingChannel<K> channel = action::accept;
+            var cursor = redis.scan(channel, scanArgs);
+            for (; !cursor.isFinished();) {
+                cursor = redis.scan(channel, cursor, scanArgs);
+            }
+        } else {
+            var cursor = redis.scan(scanArgs);
+            for (;;) {
+                for (K key : cursor.getKeys()) {
+                    action.accept(key);
+                }
+                if (cursor.isFinished()) {
+                    break;
+                }
                 cursor = redis.scan(cursor, scanArgs);
             }
         }
     }
 
     public static final <K, V> void hscanForEach(RedisCommands<K, V> redis, K key, BiConsumer<K, V> action) {
-        var cursor = redis.hscan(action::accept, key);
-        for (; !cursor.isFinished();) {
-            cursor = redis.hscan(action::accept, key, cursor);
-        }
+        hscanForEach(redis, key, null, action);
     }
 
     public static final <K, V> void hscanForEach(RedisCommands<K, V> redis, K key, ScanArgs scanArgs,
             BiConsumer<K, V> action) {
-        var cursor = redis.hscan(action::accept, key, scanArgs);
-        for (; !cursor.isFinished();) {
-            cursor = redis.hscan(action::accept, key, cursor, scanArgs);
+        hscanForEach0(redis, key, scanArgs, action, false);
+    }
+
+    static final <K, V> void hscanForEach0(RedisCommands<K, V> redis, K key, ScanArgs scanArgs, BiConsumer<K, V> action,
+            boolean useStreamChannel) {
+        if (useStreamChannel) {
+            var cursor = redis.hscan(action::accept, key, scanArgs);
+            for (; !cursor.isFinished();) {
+                cursor = redis.hscan(action::accept, key, cursor, scanArgs);
+            }
+        } else {
+            var cursor = redis.hscan(key, scanArgs);
+            for (;;) {
+                cursor.getMap().forEach(action);
+                if (cursor.isFinished()) {
+                    break;
+                }
+                cursor = redis.hscan(key, cursor, scanArgs);
+            }
         }
     }
 
     public static final <K, V> Map<K, V> hscanGetAll(RedisCommands<K, V> redis, K key) {
-        return hscanGetAll(redis, key, HashMap::new);
+        return hscanGetAll(redis, key, LinkedHashMap::new);
     }
 
     public static final <K, V> Map<K, V> hscanGetAll(RedisCommands<K, V> redis, K key,
             Supplier<Map<K, V>> hashFactory) {
         var hash = hashFactory.get();
-        hscanForEach(redis, key, hash::put);
+        hscanForEach0(redis, key, null, hash::put, true);
         return hash;
     }
 
     public static final <K, V> Map<K, V> hscanGetAll(RedisCommands<K, V> redis, K key, ScanArgs scanArgs) {
-        return hscanGetAll(redis, key, scanArgs, HashMap::new);
+        return hscanGetAll(redis, key, scanArgs, LinkedHashMap::new);
     }
 
     public static final <K, V> Map<K, V> hscanGetAll(RedisCommands<K, V> redis, K key, ScanArgs scanArgs,
             Supplier<Map<K, V>> hashFactory) {
         var hash = hashFactory.get();
-        hscanForEach(redis, key, scanArgs, hash::put);
+        hscanForEach0(redis, key, scanArgs, hash::put, true);
         return hash;
-    }
-
-    private static final <K, V> void doActionForEachKey(RedisCommands<K, V> redis,
-            BiConsumer<RedisCommands<K, V>, K> action, KeyScanCursor<K> cursor) {
-        for (K key : cursor.getKeys()) {
-            action.accept(redis, key);
-        }
     }
 
     public static final <K, V> CompletionStage<Void> scanForEach(RedisAsyncCommands<K, V> redis,
@@ -320,17 +330,17 @@ public final class RedisUtil {
     }
 
     public static final <K, V> CompletionStage<Map<K, V>> hscanGetAll(RedisAsyncCommands<K, V> redis, K key) {
-        return hscanGetAll(redis, key, null, null, HashMap::new);
+        return hscanGetAll(redis, key, null, null, LinkedHashMap::new);
     }
 
     public static final <K, V> CompletionStage<Map<K, V>> hscanGetAll(RedisAsyncCommands<K, V> redis, K key,
             ScanArgs scanArgs) {
-        return hscanGetAll(redis, key, null, scanArgs, HashMap::new);
+        return hscanGetAll(redis, key, null, scanArgs, LinkedHashMap::new);
     }
 
     public static final <K, V> CompletionStage<Map<K, V>> hscanGetAll(RedisAsyncCommands<K, V> redis, K key,
             ScanCursor scanCursor, ScanArgs scanArgs) {
-        return hscanGetAll(redis, key, scanCursor, scanArgs, HashMap::new);
+        return hscanGetAll(redis, key, scanCursor, scanArgs, LinkedHashMap::new);
     }
 
     public static final <K, V> CompletionStage<Map<K, V>> hscanGetAll(RedisAsyncCommands<K, V> redis, K key,
