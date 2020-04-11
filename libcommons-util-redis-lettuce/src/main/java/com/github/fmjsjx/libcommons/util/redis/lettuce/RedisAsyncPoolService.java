@@ -7,7 +7,6 @@ import java.util.function.Function;
 
 import com.github.fmjsjx.libcommons.util.redis.LuaScript;
 
-import io.lettuce.core.RedisNoScriptException;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -63,63 +62,23 @@ public interface RedisAsyncPoolService<K, V> {
 
     @SuppressWarnings("unchecked")
     default <R> CompletableFuture<R> eval(LuaScript script, ScriptOutputType type, K... keys) {
-        return apply(redis -> {
-            return redis.<R>evalsha(script.sha1(), type, keys).<CompletionStage<R>>handle((r, e) -> {
-                if (e != null) {
-                    if (e instanceof RedisNoScriptException) {
-                        return redis.<R>eval(script.script(), type, keys);
-                    }
-                    return CompletableFuture.<R>failedStage(e);
-                }
-                return CompletableFuture.<R>completedStage(r);
-            }).<R>thenCompose(r -> r);
-        });
+        return apply(redis -> RedisUtil.eval(redis, script, type, keys));
     }
 
     @SuppressWarnings("unchecked")
     default <R> CompletableFuture<R> evalAsync(Executor executor, LuaScript script, ScriptOutputType type, K... keys) {
-        return applyAsync(redis -> {
-            return redis.<R>evalsha(script.sha1(), type, keys).<CompletionStage<R>>handle((r, e) -> {
-                if (e != null) {
-                    if (e instanceof RedisNoScriptException) {
-                        return redis.<R>eval(script.script(), type, keys);
-                    }
-                    return CompletableFuture.<R>failedStage(e);
-                }
-                return CompletableFuture.<R>completedStage(r);
-            }).<R>thenCompose(r -> r);
-        }, executor);
+        return applyAsync(redis -> RedisUtil.eval(redis, script, type, keys), executor);
     }
 
     @SuppressWarnings("unchecked")
     default <R> CompletableFuture<R> eval(LuaScript script, ScriptOutputType type, K[] keys, V... values) {
-        return apply(redis -> {
-            return redis.<R>evalsha(script.sha1(), type, keys, values).<CompletionStage<R>>handle((r, e) -> {
-                if (e != null) {
-                    if (e instanceof RedisNoScriptException) {
-                        return redis.<R>eval(script.script(), type, keys, values);
-                    }
-                    return CompletableFuture.<R>failedStage(e);
-                }
-                return CompletableFuture.<R>completedStage(r);
-            }).<R>thenCompose(r -> r);
-        });
+        return apply(redis -> RedisUtil.eval(redis, script, type, keys, values));
     }
 
     @SuppressWarnings("unchecked")
     default <R> CompletableFuture<R> evalAsync(Executor executor, LuaScript script, ScriptOutputType type, K[] keys,
             V... values) {
-        return applyAsync(redis -> {
-            return redis.<R>evalsha(script.sha1(), type, keys, values).<CompletionStage<R>>handle((r, e) -> {
-                if (e != null) {
-                    if (e instanceof RedisNoScriptException) {
-                        return redis.<R>eval(script.script(), type, keys, values);
-                    }
-                    return CompletableFuture.<R>failedStage(e);
-                }
-                return CompletableFuture.<R>completedStage(r);
-            }).<R>thenCompose(r -> r);
-        }, executor);
+        return applyAsync(redis -> RedisUtil.eval(redis, script, type, keys, values), executor);
     }
 
 }

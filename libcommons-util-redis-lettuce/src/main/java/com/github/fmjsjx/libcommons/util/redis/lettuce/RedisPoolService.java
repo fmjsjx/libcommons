@@ -7,7 +7,6 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 
 import com.github.fmjsjx.libcommons.util.redis.LuaScript;
 
-import io.lettuce.core.RedisNoScriptException;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -30,24 +29,12 @@ public interface RedisPoolService<K, V> {
 
     @SuppressWarnings("unchecked")
     default <R> R eval(LuaScript script, ScriptOutputType type, K... keys) throws Exception {
-        return apply(redis -> {
-            try {
-                return redis.evalsha(script.sha1(), type, keys);
-            } catch (RedisNoScriptException e) {
-                return redis.eval(script.script(), type, keys);
-            }
-        });
+        return apply(redis -> RedisUtil.eval(redis, script, type, keys));
     }
 
     @SuppressWarnings("unchecked")
     default <R> R eval(LuaScript script, ScriptOutputType type, K[] keys, V... values) throws Exception {
-        return apply(redis -> {
-            try {
-                return redis.evalsha(script.sha1(), type, keys, values);
-            } catch (RedisNoScriptException e) {
-                return redis.eval(script.script(), type, keys, values);
-            }
-        });
+        return apply(redis -> RedisUtil.eval(redis, script, type, keys, values));
     }
 
 }
