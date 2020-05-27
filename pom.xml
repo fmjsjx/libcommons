@@ -26,15 +26,15 @@
     <java.version>11</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <slf4j.version>1.7.30</slf4j.version>
-    <log4j2.version>2.13.1</log4j2.version>
+    <log4j2.version>2.13.3</log4j2.version>
     <lombok.version>1.18.12</lombok.version>
-    <netty.version>4.1.47.Final</netty.version>
-    <netty-tcnative.version>2.0.29.Final</netty-tcnative.version>
+    <netty.version>4.1.50.Final</netty.version>
+    <netty-tcnative.version>2.0.30.Final</netty-tcnative.version>
     <dsl-json.version>1.9.5</dsl-json.version>
-    <jackson.version>2.10.3</jackson.version>    
+    <jackson.version>2.11.0</jackson.version>
     <jsoniter.version>0.9.23</jsoniter.version>
-    <spring-boot.version>2.2.6.RELEASE</spring-boot.version>
-    <junit.version>5.6.0</junit.version>
+    <spring-boot.version>2.3.0.RELEASE</spring-boot.version>
+    <junit.version>5.6.2</junit.version>
   </properties>
 
   <repositories>
