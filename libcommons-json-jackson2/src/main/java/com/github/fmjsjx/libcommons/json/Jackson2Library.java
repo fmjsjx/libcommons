@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -12,6 +13,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.fmjsjx.libcommons.util.function.io.BiIoConsumer;
@@ -19,6 +22,13 @@ import com.github.fmjsjx.libcommons.util.function.io.IoConsumer;
 import com.github.fmjsjx.libcommons.util.function.io.IoFunction;
 import com.github.fmjsjx.libcommons.util.function.io.IoSupplier;
 
+/**
+ * The jackson2 implementation of {@link JsonLibrary}.
+ * 
+ * @since 1.0
+ *
+ * @author MJ Fang
+ */
 public class Jackson2Library implements JsonLibrary<JsonNode> {
 
     public static final class Jackson2Exception extends JsonException {
@@ -54,7 +64,7 @@ public class Jackson2Library implements JsonLibrary<JsonNode> {
     private final ObjectMapper objectMapper;
 
     public Jackson2Library(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+        this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper must not be null");
     }
 
     public Jackson2Library() {
@@ -63,6 +73,14 @@ public class Jackson2Library implements JsonLibrary<JsonNode> {
 
     public ObjectMapper objectMapper() {
         return objectMapper;
+    }
+
+    public ObjectNode createObjectNode() {
+        return objectMapper().createObjectNode();
+    }
+
+    public ArrayNode createArrayNode() {
+        return objectMapper().createArrayNode();
     }
 
     @Override

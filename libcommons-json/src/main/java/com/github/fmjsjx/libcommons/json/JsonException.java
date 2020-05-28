@@ -3,6 +3,13 @@ package com.github.fmjsjx.libcommons.json;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+/**
+ * A runtime exception threw by a JSON encoder/decoder.
+ * 
+ * @since 1.0
+ *
+ * @author MJ Fang
+ */
 public abstract class JsonException extends RuntimeException implements Supplier<Throwable> {
 
     private static final long serialVersionUID = 5604421476181087459L;

@@ -4,6 +4,15 @@ import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * A JSON encode/decode library.
+ * 
+ * @param <JSON> the type of dynamic JSON object
+ * 
+ * @since 1.0
+ *
+ * @author MJ Fang
+ */
 public interface JsonLibrary<JSON> {
 
     private static byte[] toBytes(String src) {
