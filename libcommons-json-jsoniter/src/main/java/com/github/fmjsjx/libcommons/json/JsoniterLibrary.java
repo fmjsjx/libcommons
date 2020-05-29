@@ -42,7 +42,7 @@ public class JsoniterLibrary implements JsonLibrary<Any> {
 
         static {
             JsoniterSpi.setDefaultConfig(JsoniterSpi.getDefaultConfig().copyBuilder().escapeUnicode(false).build());
-            // TODO
+            Jdk8TimeSupport.enableAll();
         }
     }
 
