@@ -19,8 +19,10 @@ public class LettuceProperties {
 
     private RedisClientProperties client;
 
-    @Setter
+    private List<RedisClusterClientProperties> clusterClients = Collections.emptyList();
+
     @Getter
+    @Setter
     @ToString
     public static class RedisClientProperties {
 
@@ -31,6 +33,25 @@ public class LettuceProperties {
         private List<RedisConnectionProperties> connections = Collections.emptyList();
 
         private List<RedisPoolProperties> pools = Collections.emptyList();
+
+    }
+
+    @Getter
+    @Setter
+    @ToString(callSuper = true)
+    public static class RedisClusterClientProperties extends RedisClientProperties {
+
+        @NonNull
+        private String name;
+
+        private URI uri;
+
+        private String host;
+        /**
+         * Default is 6379
+         */
+        private int port = 6379;
+        private String auth;
 
     }
 
@@ -81,7 +102,7 @@ public class LettuceProperties {
 
     public enum RedisConnectionType {
 
-        NORMAL, PUBSUB
+        NORMAL, PUBSUB, SENTINEL
 
     }
 
