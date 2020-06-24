@@ -33,7 +33,7 @@
     <dsl-json.version>1.9.5</dsl-json.version>
     <jackson.version>2.11.0</jackson.version>
     <jsoniter.version>0.9.23</jsoniter.version>
-    <spring-boot.version>2.3.0.RELEASE</spring-boot.version>
+    <spring-boot.version>2.3.1.RELEASE</spring-boot.version>
     <junit.version>5.6.2</junit.version>
   </properties>
 
@@ -148,6 +148,11 @@
             <target>${java.version}</target>
             <encoding>${project.build.sourceEncoding}</encoding>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.1.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
