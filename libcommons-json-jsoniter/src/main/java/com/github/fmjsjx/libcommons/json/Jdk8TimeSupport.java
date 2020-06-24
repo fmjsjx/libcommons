@@ -66,18 +66,24 @@ public class Jdk8TimeSupport {
                 JsoniterSpi.registerTypeEncoder(LocalDateTime.class, new Encoder.ReflectionEncoder() {
                     @Override
                     public void encode(Object obj, JsonStream stream) throws IOException {
-                        stream.writeVal(formatter.format((LocalDateTime) obj));
+                        if (obj != null) {
+                            stream.writeVal(formatter.format((LocalDateTime) obj));
+                        }
                     }
 
                     @Override
                     public Any wrap(Object obj) {
+                        if (obj == null) {
+                            return Any.wrapNull();
+                        }
                         return Any.wrap(formatter.format((LocalDateTime) obj));
                     }
                 });
                 JsoniterSpi.registerTypeDecoder(LocalDateTime.class, new Decoder() {
                     @Override
                     public Object decode(JsonIterator iter) throws IOException {
-                        return LocalDateTime.parse(iter.readString(), formatter);
+                        String value = iter.readString();
+                        return value == null ? null : LocalDateTime.parse(value, formatter);
                     }
                 });
             } else {
@@ -107,18 +113,24 @@ public class Jdk8TimeSupport {
                 JsoniterSpi.registerTypeEncoder(LocalDate.class, new Encoder.ReflectionEncoder() {
                     @Override
                     public void encode(Object obj, JsonStream stream) throws IOException {
-                        stream.writeVal(formatter.format((LocalDate) obj));
+                        if (obj != null) {
+                            stream.writeVal(formatter.format((LocalDate) obj));
+                        }
                     }
 
                     @Override
                     public Any wrap(Object obj) {
+                        if (obj == null) {
+                            return Any.wrapNull();
+                        }
                         return Any.wrap(formatter.format((LocalDate) obj));
                     }
                 });
                 JsoniterSpi.registerTypeDecoder(LocalDate.class, new Decoder() {
                     @Override
                     public Object decode(JsonIterator iter) throws IOException {
-                        return LocalDate.parse(iter.readString(), formatter);
+                        String value = iter.readString();
+                        return value == null ? null : LocalDate.parse(value, formatter);
                     }
                 });
             } else {
@@ -148,18 +160,24 @@ public class Jdk8TimeSupport {
                 JsoniterSpi.registerTypeEncoder(LocalTime.class, new Encoder.ReflectionEncoder() {
                     @Override
                     public void encode(Object obj, JsonStream stream) throws IOException {
-                        stream.writeVal(formatter.format((LocalTime) obj));
+                        if (obj != null) {
+                            stream.writeVal(formatter.format((LocalTime) obj));
+                        }
                     }
 
                     @Override
                     public Any wrap(Object obj) {
+                        if (obj == null) {
+                            return Any.wrapNull();
+                        }
                         return Any.wrap(formatter.format((LocalTime) obj));
                     }
                 });
                 JsoniterSpi.registerTypeDecoder(LocalTime.class, new Decoder() {
                     @Override
                     public Object decode(JsonIterator iter) throws IOException {
-                        return LocalTime.parse(iter.readString(), formatter);
+                        String value = iter.readString();
+                        return value == null ? null : LocalTime.parse(value, formatter);
                     }
                 });
             } else {
@@ -189,18 +207,24 @@ public class Jdk8TimeSupport {
                 JsoniterSpi.registerTypeEncoder(OffsetDateTime.class, new Encoder.ReflectionEncoder() {
                     @Override
                     public void encode(Object obj, JsonStream stream) throws IOException {
-                        stream.writeVal(formatter.format((OffsetDateTime) obj));
+                        if (obj != null) {
+                            stream.writeVal(formatter.format((OffsetDateTime) obj));
+                        }
                     }
 
                     @Override
                     public Any wrap(Object obj) {
+                        if (obj == null) {
+                            return Any.wrapNull();
+                        }
                         return Any.wrap(formatter.format((OffsetDateTime) obj));
                     }
                 });
                 JsoniterSpi.registerTypeDecoder(OffsetDateTime.class, new Decoder() {
                     @Override
                     public Object decode(JsonIterator iter) throws IOException {
-                        return OffsetDateTime.parse(iter.readString(), formatter);
+                        String value = iter.readString();
+                        return value == null ? null : OffsetDateTime.parse(value, formatter);
                     }
                 });
             } else {
@@ -227,18 +251,24 @@ public class Jdk8TimeSupport {
                 JsoniterSpi.registerTypeEncoder(ZonedDateTime.class, new Encoder.ReflectionEncoder() {
                     @Override
                     public void encode(Object obj, JsonStream stream) throws IOException {
-                        stream.writeVal(formatter.format((ZonedDateTime) obj));
+                        if (obj != null) {
+                            stream.writeVal(formatter.format((ZonedDateTime) obj));
+                        }
                     }
 
                     @Override
                     public Any wrap(Object obj) {
+                        if (obj == null) {
+                            return Any.wrapNull();
+                        }
                         return Any.wrap(formatter.format((ZonedDateTime) obj));
                     }
                 });
                 JsoniterSpi.registerTypeDecoder(ZonedDateTime.class, new Decoder() {
                     @Override
                     public Object decode(JsonIterator iter) throws IOException {
-                        return ZonedDateTime.parse(iter.readString(), formatter);
+                        String value = iter.readString();
+                        return value == null ? null : ZonedDateTime.parse(value, formatter);
                     }
                 });
             } else {
