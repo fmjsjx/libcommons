@@ -13,7 +13,7 @@ public class SQLRuntimeException extends WrappedRuntimeException {
     }
 
     public SQLException wrappedSQLException() {
-        return (SQLException) wrappedCause;
+        return (SQLException) wrappedCause();
     }
 
 }
