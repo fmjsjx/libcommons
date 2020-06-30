@@ -167,10 +167,8 @@
       <!-- ALIYUN ONS -->
       <dependency>
         <groupId>com.aliyun.openservices</groupId>
-        <artifactId>ons-all</artifactId>
+        <artifactId>ons-client</artifactId>
         <version>${aliyun-ons.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
       </dependency>
       <!-- Apache RocketMQ -->
       <dependency>
