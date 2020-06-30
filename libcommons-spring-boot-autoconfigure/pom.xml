@@ -62,6 +62,16 @@
       <artifactId>tomcat-jdbc</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongodb-driver-sync</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongodb-driver-reactivestreams</artifactId>
+      <optional>true</optional>
+    </dependency>
     <!-- Test -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
