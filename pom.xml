@@ -69,6 +69,14 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- Spring Boot -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <!-- log -->
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -177,14 +185,6 @@
         <groupId>org.apache.pulsar</groupId>
         <artifactId>pulsar-client</artifactId>
         <version>${pulsar.version}</version>
-      </dependency>
-      <!-- Spring Boot -->
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
       </dependency>
       <!-- test -->
       <dependency>
