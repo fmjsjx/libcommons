@@ -36,6 +36,10 @@
     <spring-boot.version>2.3.1.RELEASE</spring-boot.version>
     <junit.version>5.6.2</junit.version>
     <mongodb.version>4.0.4</mongodb.version>
+    <kafka.version>2.5.0</kafka.version>
+    <aliyun-ons.version>1.8.6.Final</aliyun-ons.version>
+    <rocketmq.version>4.7.1</rocketmq.version>
+    <pulsar.version>2.6.0</pulsar.version>
   </properties>
 
   <repositories>
@@ -65,14 +69,6 @@
 
   <dependencyManagement>
     <dependencies>
-      <!-- spring-boot -->
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
       <!-- log -->
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -86,12 +82,13 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <!-- library -->
+      <!-- project -->
       <dependency>
         <groupId>org.projectlombok</groupId>
         <artifactId>lombok</artifactId>
         <version>${lombok.version}</version>
       </dependency>
+      <!-- NETTY -->
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
@@ -109,6 +106,7 @@
         <artifactId>netty-tcnative-boringssl-static</artifactId>
         <version>${netty-tcnative.version}</version>
       </dependency>
+      <!-- JSON libraries -->
       <dependency>
         <groupId>com.dslplatform</groupId>
         <artifactId>dsl-json-java8</artifactId>
@@ -126,6 +124,17 @@
         <artifactId>jsoniter</artifactId>
         <version>${jsoniter.version}</version>
       </dependency>
+      <!-- MongoDB -->
+      <dependency>
+        <groupId>org.mongodb</groupId>
+        <artifactId>bson</artifactId>
+        <version>${mongodb.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mongodb</groupId>
+        <artifactId>mongodb-driver-core</artifactId>
+        <version>${mongodb.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.mongodb</groupId>
         <artifactId>mongodb-driver-sync</artifactId>
@@ -141,15 +150,41 @@
         <artifactId>mongodb-driver-legacy</artifactId>
         <version>${mongodb.version}</version>
       </dependency>
+      <!-- Apache KAFKA -->
       <dependency>
-        <groupId>org.mongodb</groupId>
-        <artifactId>mongodb-driver-core</artifactId>
-        <version>${mongodb.version}</version>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-clients</artifactId>
+        <version>${kafka.version}</version>
       </dependency>
+      <!-- ALIYUN ONS -->
       <dependency>
-        <groupId>org.mongodb</groupId>
-        <artifactId>bson</artifactId>
-        <version>${mongodb.version}</version>
+        <groupId>com.aliyun.openservices</groupId>
+        <artifactId>ons-all</artifactId>
+        <version>${aliyun-ons.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Apache RocketMQ -->
+      <dependency>
+        <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-all</artifactId>
+        <version>${rocketmq.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Apache PULSAR -->
+      <dependency>
+        <groupId>org.apache.pulsar</groupId>
+        <artifactId>pulsar-client</artifactId>
+        <version>${pulsar.version}</version>
+      </dependency>
+      <!-- Spring Boot -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <!-- test -->
       <dependency>
