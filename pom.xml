@@ -18,8 +18,10 @@
     <module>libcommons-spring-boot-autoconfigure</module>
     <module>libcommons-spring-boot-starters</module>
     <module>libcommons-util</module>
+    <module>libcommons-util-aliyunons</module>
     <module>libcommons-util-collection</module>
     <module>libcommons-util-redis-lettuce</module>
+    <module>libcommons-util-rocketmq</module>
   </modules>
 
   <properties>

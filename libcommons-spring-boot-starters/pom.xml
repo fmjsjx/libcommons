@@ -13,9 +13,12 @@
   <name>libcommons/SpringBoot Starters</name>
 
   <modules>
+    <module>libcommons-spring-boot-starter-aliyunons</module>
+    <module>libcommons-spring-boot-starter-kafka</module>
     <module>libcommons-spring-boot-starter-redis-lettuce</module>
+    <module>libcommons-spring-boot-starter-rocketmq</module>
   </modules>
-  
+
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
