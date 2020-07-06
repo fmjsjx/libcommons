@@ -8,7 +8,7 @@
     <version>0.1.0</version>
     <relativePath>..</relativePath>
   </parent>
-  <artifactId>libcommons-spring-boot-starter-aliyunons</artifactId>
+  <artifactId>libcommons-spring-boot-starter-rocketmq</artifactId>
   <name>libcommons/SpringBoot Starter ALIYUN ONS</name>
 
   <dependencies>
