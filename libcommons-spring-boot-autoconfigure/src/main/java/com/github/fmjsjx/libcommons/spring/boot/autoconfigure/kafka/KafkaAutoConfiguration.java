@@ -57,13 +57,17 @@ public class KafkaAutoConfiguration {
             this.registry = registry;
             var bindResult = Binder.get(environment).bind("libcommons.kafka", KafkaProperties.class);
             if (bindResult.isBound()) {
-                var onsProps = bindResult.get();
-                onsProps.getProducers().forEach(this::registerProducer);
-                onsProps.getConsumers().forEach(this::registerConsumer);
+                var kafkaProperties = bindResult.get();
+                Optional.ofNullable(kafkaProperties.getProducers())
+                        .ifPresent(configs -> configs.forEach(this::registerProducer));
+                Optional.ofNullable(kafkaProperties.getConsumers())
+                        .ifPresent(configs -> configs.forEach(this::registerConsumer));
             }
         }
 
-        private void registerProducer(String name, ProducerProperties config) {
+        private void registerProducer(ProducerProperties config) {
+            var name = config.getName();
+            var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "KafkaProducer");
             Properties properties = Optional.ofNullable(config.getConfigs()).orElseGet(Properties::new);
             properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer().getName());
             properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer().getName());
@@ -81,7 +85,6 @@ public class KafkaAutoConfiguration {
             if (config.getRetries() != null) {
                 properties.setProperty(ProducerConfig.RETRIES_CONFIG, config.getRetries().toString());
             }
-            var beanName = name + "KafkaProducer";
             @SuppressWarnings("rawtypes")
             var beanDefinition = BeanDefinitionBuilder
                     .genericBeanDefinition(KafkaProducer.class, () -> new KafkaProducer(properties))
@@ -90,7 +93,9 @@ public class KafkaAutoConfiguration {
             registry.registerBeanDefinition(beanName, beanDefinition);
         }
 
-        private void registerConsumer(String name, ConsumerProperties config) {
+        private void registerConsumer(ConsumerProperties config) {
+            var name = config.getName();
+            var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "KafkaConsumer");
             Properties properties = Optional.ofNullable(config.getConfigs()).orElseGet(Properties::new);
             properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, config.getKeyDeserializer().getName());
             properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
@@ -127,7 +132,6 @@ public class KafkaAutoConfiguration {
                 properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
                         config.getEnableAutoCommit().toString());
             }
-            var beanName = name + "KafkaConsumer";
             @SuppressWarnings("rawtypes")
             var beanDefinition = BeanDefinitionBuilder
                     .genericBeanDefinition(KafkaConsumer.class, () -> new KafkaConsumer(properties))

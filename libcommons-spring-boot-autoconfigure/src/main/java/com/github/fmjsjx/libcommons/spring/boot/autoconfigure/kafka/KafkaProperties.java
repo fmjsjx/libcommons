@@ -1,8 +1,7 @@
 package com.github.fmjsjx.libcommons.spring.boot.autoconfigure.kafka;
 
 import java.time.Duration;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.kafka.common.serialization.Deserializer;
@@ -23,13 +22,20 @@ import lombok.ToString;
 @ConfigurationProperties("libcommons.kafka")
 public class KafkaProperties {
 
-    private Map<String, ProducerProperties> producers = new LinkedHashMap<>();
-    private Map<String, ConsumerProperties> consumers = new LinkedHashMap<>();
+    private List<ProducerProperties> producers;
+    private List<ConsumerProperties> consumers;
 
     @Getter
     @Setter
     @ToString
     public static class ProducerProperties {
+
+        @NonNull
+        private String name;
+        /**
+         * The default is <code>"${name}KafkaProducer"</code>.
+         */
+        private String beanName;
 
         /**
          * The default is
@@ -92,6 +98,14 @@ public class KafkaProperties {
     @Setter
     @ToString
     public static class ConsumerProperties {
+
+        @NonNull
+        private String name;
+        /**
+         * The default is <code>"${name}KafkaConsumer"</code>.
+         */
+        private String beanName;
+
         /**
          * The default is
          * {@code org.apache.kafka.common.serialization.StringDeserializer}.
@@ -106,7 +120,7 @@ public class KafkaProperties {
         private String bootstrapServers;
         @NonNull
         private String groupId;
-        
+
         private String groupInstanceId;
         /**
          * The default is {@code 1B}.
