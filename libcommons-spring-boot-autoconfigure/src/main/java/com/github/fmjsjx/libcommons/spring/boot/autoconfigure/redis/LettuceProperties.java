@@ -27,7 +27,9 @@ public class LettuceProperties {
     public static class RedisClientProperties {
 
         /**
-         * The default is {@code "io.lettuce.core.RedisClient"}.
+         * The default is {@code "io.lettuce.core.RedisClient"},
+         * <p>
+         * or <code>"${name}RedisClusterClient"</code> for cluster client.
          */
         private String beanName = "io.lettuce.core.RedisClient";
 
@@ -48,10 +50,6 @@ public class LettuceProperties {
 
         @NonNull
         private String name;
-        /**
-         * The default is <code>"${name}RedisPool"</code>.
-         */
-        private String beanName;
 
         private URI uri;
 
@@ -72,7 +70,11 @@ public class LettuceProperties {
         @NonNull
         private String name;
         /**
-         * The default is <code>"${name}RedisConnection"</code>.
+         * The default is <code>"${name}RedisConnection"</code>,
+         * <p>
+         * or <code>"${name}RedisPool"</code> for pool,
+         * <p>
+         * or <code>"${name}RedisClusterConnection"</code> for cluster connection.
          */
         private String beanName;
 
