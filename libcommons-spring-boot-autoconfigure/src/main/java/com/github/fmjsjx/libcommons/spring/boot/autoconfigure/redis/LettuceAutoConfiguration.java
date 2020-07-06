@@ -1,6 +1,7 @@
 package com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis;
 
 import java.net.URI;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.commons.pool2.impl.GenericObjectPool;
@@ -104,9 +105,7 @@ public class LettuceAutoConfiguration {
             }
         }
 
-        private static final String redisClientBeanName() {
-            return "io.lettuce.core.RedisClient";
-        }
+        private String clientBeanName;
 
         private RedisClient registerClientBean(RedisClientProperties properties) {
             ClientResources.Builder builder = ClientResources.builder();
@@ -117,7 +116,8 @@ public class LettuceAutoConfiguration {
                 builder.computationThreadPoolSize(properties.getComputationThreads());
             }
             RedisClient client = RedisClient.create(builder.build());
-            registry.registerBeanDefinition(redisClientBeanName(),
+            clientBeanName = properties.getBeanName();
+            registry.registerBeanDefinition(clientBeanName,
                     BeanDefinitionBuilder.genericBeanDefinition(RedisClient.class, () -> client)
                             .setDestroyMethodName("shutdown").getBeanDefinition());
             return client;
@@ -125,25 +125,26 @@ public class LettuceAutoConfiguration {
 
         private void registerConnectionBean(RedisClient client, RedisConnectionProperties properties)
                 throws BeansException {
-            String beanName = properties.getName() + "RedisConnection";
+            String beanName = Optional.ofNullable(properties.getBeanName())
+                    .orElseGet(() -> properties.getName() + "RedisConnection");
             RedisURI uri = createUri(properties);
             RedisCodec<?, ?> codec = getRedisCodec(properties.getCodec());
             if (properties.getType() == RedisConnectionType.NORMAL) {
                 BeanDefinition beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(StatefulRedisConnection.class, () -> client.connect(codec, uri))
-                        .addDependsOn(redisClientBeanName()).getBeanDefinition();
+                        .addDependsOn(clientBeanName).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             } else if (properties.getType() == RedisConnectionType.PUBSUB) {
                 BeanDefinition beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(StatefulRedisPubSubConnection.class,
                                 () -> client.connectPubSub(codec, uri))
-                        .addDependsOn(redisClientBeanName()).getBeanDefinition();
+                        .addDependsOn(clientBeanName).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             } else if (properties.getType() == RedisConnectionType.SENTINEL) {
                 BeanDefinition beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(StatefulRedisSentinelConnection.class,
                                 () -> client.connectSentinel(codec, uri))
-                        .addDependsOn(redisClientBeanName()).getBeanDefinition();
+                        .addDependsOn(clientBeanName).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             }
         }
@@ -175,7 +176,8 @@ public class LettuceAutoConfiguration {
         }
 
         private void registerPoolBean(RedisClient client, RedisPoolProperties properties) throws BeansException {
-            String beanName = properties.getName() + "RedisPool";
+            String beanName = Optional.ofNullable(properties.getBeanName())
+                    .orElseGet(() -> properties.getName() + "RedisPool");
             if (properties.getType() != RedisConnectionType.NORMAL) {
                 throw new FatalBeanException("Redis connection type must be normal for pools");
             }
@@ -187,7 +189,7 @@ public class LettuceAutoConfiguration {
                         .genericBeanDefinition(AsyncPool.class,
                                 () -> AsyncConnectionPoolSupport
                                         .createBoundedObjectPool(() -> client.connectAsync(codec, uri), config))
-                        .addDependsOn(redisClientBeanName()).getBeanDefinition();
+                        .addDependsOn(clientBeanName).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             } else {
                 Supplier<StatefulRedisConnection<?, ?>> connectionSupplier = () -> client.connect(codec, uri);
@@ -195,7 +197,7 @@ public class LettuceAutoConfiguration {
                 BeanDefinition beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(GenericObjectPool.class,
                                 () -> ConnectionPoolSupport.createGenericObjectPool(connectionSupplier, config))
-                        .setDestroyMethodName("close").addDependsOn(redisClientBeanName()).getBeanDefinition();
+                        .setDestroyMethodName("close").addDependsOn(clientBeanName).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             }
         }
