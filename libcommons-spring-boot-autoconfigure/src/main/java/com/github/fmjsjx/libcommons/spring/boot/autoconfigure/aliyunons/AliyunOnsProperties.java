@@ -64,7 +64,7 @@ public class AliyunOnsProperties {
         @NonNull
         private String name;
         /**
-         * The default is <code>"${name}Producer"</code>.
+         * The default is <code>"${name}ONSProducer"</code>.
          */
         private String beanName;
 
@@ -101,7 +101,7 @@ public class AliyunOnsProperties {
         @NonNull
         private String name;
         /**
-         * The default is <code>"${name}Consumer"</code>.
+         * The default is <code>"${name}ONSConsumer"</code>.
          */
         private String beanName;
 

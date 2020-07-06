@@ -76,7 +76,7 @@ public class AliyunOnsAutoConfiguration {
 
         private void registerProducer(ProducerProperties config) {
             var name = config.getName();
-            var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "Producer");
+            var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "ONSProducer");
             Properties properties = new Properties();
             setBaseProperties(config, properties);
             if (config.getSendMsgTimeout() != null) {
@@ -155,7 +155,7 @@ public class AliyunOnsAutoConfiguration {
 
         private void registerConsumer(ConsumerProperties config) {
             var name = config.getName();
-            var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "Consumer");
+            var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "ONSConsumer");
             Properties properties = new Properties();
             setBaseProperties(config, properties);
             if (config.getMessageModel() != null) {

@@ -1,8 +1,7 @@
 package com.github.fmjsjx.libcommons.spring.boot.autoconfigure.rocketmq;
 
 import java.time.Duration;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.apache.rocketmq.client.AccessChannel;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
@@ -21,9 +20,9 @@ import lombok.ToString;
 @ConfigurationProperties("libcommons.rocketmq")
 public class RocketMQProperties {
 
-    private Map<String, ProducerProperties> producers = new LinkedHashMap<>();
+    private List<ProducerProperties> producers;
 
-    private Map<String, ConsumerProperties> consumers = new LinkedHashMap<>();
+    private List<ConsumerProperties> consumers;
 
     public enum ProducedrType {
         /**
@@ -49,6 +48,10 @@ public class RocketMQProperties {
 
     interface ConfigProperties {
 
+        String getName();
+
+        String getBeanName();
+
         String getNamesrvAddr();
 
         String getAccessKey();
@@ -67,6 +70,13 @@ public class RocketMQProperties {
     @Setter
     @ToString
     public static class ProducerProperties implements ConfigProperties {
+
+        @NonNull
+        private String name;
+        /**
+         * The default is <code>"${name}RocketMQProducer"</code>.
+         */
+        private String beanName;
 
         @NonNull
         private String namesrvAddr;
@@ -109,6 +119,13 @@ public class RocketMQProperties {
     @Setter
     @ToString
     public static class ConsumerProperties implements ConfigProperties {
+
+        @NonNull
+        private String name;
+        /**
+         * The default is <code>"${name}RocketMQConsumer"</code>.
+         */
+        private String beanName;
 
         @NonNull
         private String namesrvAddr;

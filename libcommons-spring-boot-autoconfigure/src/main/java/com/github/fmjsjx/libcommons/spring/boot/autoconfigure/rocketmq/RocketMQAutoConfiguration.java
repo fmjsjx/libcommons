@@ -64,14 +64,17 @@ public class RocketMQAutoConfiguration {
             this.registry = registry;
             var bindResult = Binder.get(environment).bind("douzi.rocketmq", RocketMQProperties.class);
             if (bindResult.isBound()) {
-                var onsProps = bindResult.get();
-                onsProps.getProducers().forEach(this::registerProducer);
-                onsProps.getConsumers().forEach(this::registerConsumer);
+                var rocketmqProperties = bindResult.get();
+                Optional.ofNullable(rocketmqProperties.getProducers())
+                        .ifPresent(configs -> configs.forEach(this::registerProducer));
+                Optional.ofNullable(rocketmqProperties.getConsumers())
+                        .ifPresent(configs -> configs.forEach(this::registerConsumer));
             }
         }
 
-        private void registerProducer(String name, ProducerProperties config) {
-            var beanName = name + "MQProducer";
+        private void registerProducer(ProducerProperties config) {
+            var name = config.getName();
+            var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "RocketMQProducer");
             if (config.getType() == ProducedrType.DEFAULT) {
                 var beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(DefaultMQProducer.class, () -> createMQProducer(name, config))
@@ -180,16 +183,16 @@ public class RocketMQAutoConfiguration {
             return producer;
         }
 
-        private void registerConsumer(String name, ConsumerProperties config) {
+        private void registerConsumer(ConsumerProperties config) {
+            var name = config.getName();
+            var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "RocketMQConsumer");
             if (config.getType() == ConsumerType.PUSH) {
-                var beanName = name + "MQPushConsumer";
                 var beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(MQPushConsumer.class, () -> initPushConsumer(name, config))
                         .setScope(BeanDefinition.SCOPE_SINGLETON).setDestroyMethodName("shutdown").getBeanDefinition();
                 log.debug("Register RocketMQ PushConsumer {}: {}", beanName, beanDefinition);
                 registry.registerBeanDefinition(beanName, beanDefinition);
             } else if (config.getType() == ConsumerType.LITE_PULL) {
-                var beanName = name + "LitePullConsumer";
                 var beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(LitePullConsumer.class, () -> initLitePullConsumer(name, config))
                         .setScope(BeanDefinition.SCOPE_SINGLETON).setDestroyMethodName("shutdown").getBeanDefinition();
