@@ -1,8 +1,7 @@
 package com.github.fmjsjx.libcommons.spring.boot.autoconfigure.aliyunons;
 
 import java.time.Duration;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.lang.NonNull;
@@ -23,9 +22,9 @@ import lombok.ToString;
 @ConfigurationProperties("libcommons.aliyun-ons")
 public class AliyunOnsProperties {
 
-    private Map<String, ProducerProperties> producers = new LinkedHashMap<>();
+    private List<ProducerProperties> producers;
 
-    private Map<String, ConsumerProperties> consumers = new LinkedHashMap<>();
+    private List<ConsumerProperties> consumers;
 
     public enum ProducerType {
         NORMAL, ORDER, TRANSACTION
@@ -36,6 +35,10 @@ public class AliyunOnsProperties {
     }
 
     interface ConfigProperties {
+
+        String getName();
+
+        String getBeanName();
 
         String getNamesrvAddr();
 
@@ -57,6 +60,13 @@ public class AliyunOnsProperties {
     @Setter
     @ToString
     public static class ProducerProperties implements ConfigProperties {
+
+        @NonNull
+        private String name;
+        /**
+         * The default is <code>"${name}Producer"</code>.
+         */
+        private String beanName;
 
         @NonNull
         private String namesrvAddr;
@@ -87,6 +97,13 @@ public class AliyunOnsProperties {
     @Setter
     @ToString
     public static class ConsumerProperties implements ConfigProperties {
+
+        @NonNull
+        private String name;
+        /**
+         * The default is <code>"${name}Consumer"</code>.
+         */
+        private String beanName;
 
         @NonNull
         private String namesrvAddr;

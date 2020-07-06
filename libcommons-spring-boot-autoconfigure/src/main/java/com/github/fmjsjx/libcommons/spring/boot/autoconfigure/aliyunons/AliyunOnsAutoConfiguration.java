@@ -2,6 +2,7 @@ package com.github.fmjsjx.libcommons.spring.boot.autoconfigure.aliyunons;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Properties;
 
 import org.springframework.beans.BeansException;
@@ -66,12 +67,16 @@ public class AliyunOnsAutoConfiguration {
             var bindResult = Binder.get(environment).bind("libcommons.aliyun-ons", AliyunOnsProperties.class);
             if (bindResult.isBound()) {
                 var onsProps = bindResult.get();
-                onsProps.getProducers().forEach(this::registerProducer);
-                onsProps.getConsumers().forEach(this::registerConsumer);
+                Optional.ofNullable(onsProps.getProducers())
+                        .ifPresent(configs -> configs.forEach(this::registerProducer));
+                Optional.ofNullable(onsProps.getConsumers())
+                        .ifPresent(configs -> configs.forEach(this::registerConsumer));
             }
         }
 
-        private void registerProducer(String name, ProducerProperties config) {
+        private void registerProducer(ProducerProperties config) {
+            var name = config.getName();
+            var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "Producer");
             Properties properties = new Properties();
             setBaseProperties(config, properties);
             if (config.getSendMsgTimeout() != null) {
@@ -85,7 +90,6 @@ public class AliyunOnsAutoConfiguration {
             switch (config.getType()) {
             default:
             case NORMAL: {
-                var beanName = name + "Producer";
                 var beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(Producer.class, () -> ONSFactory.createProducer(properties))
                         .setScope(BeanDefinition.SCOPE_SINGLETON).setInitMethodName("start")
@@ -95,7 +99,6 @@ public class AliyunOnsAutoConfiguration {
             }
                 break;
             case ORDER: {
-                var beanName = name + "OrderProducer";
                 var beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(OrderProducer.class, () -> ONSFactory.createOrderProducer(properties))
                         .setScope(BeanDefinition.SCOPE_SINGLETON).setInitMethodName("start")
@@ -109,7 +112,6 @@ public class AliyunOnsAutoConfiguration {
                     throw new NoSuchElementException("libcommons.aliyun-ons." + name + ".transaction-checker-class");
                 }
                 Class<? extends LocalTransactionChecker> transactionCheckerClass = config.getTransactionCheckerClass();
-                var beanName = name + "TransactionProducer";
                 var beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(TransactionProducer.class,
                                 () -> ONSFactory.createTransactionProducer(properties,
@@ -151,7 +153,9 @@ public class AliyunOnsAutoConfiguration {
             }
         }
 
-        private void registerConsumer(String name, ConsumerProperties config) {
+        private void registerConsumer(ConsumerProperties config) {
+            var name = config.getName();
+            var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "Consumer");
             Properties properties = new Properties();
             setBaseProperties(config, properties);
             if (config.getMessageModel() != null) {
@@ -182,7 +186,6 @@ public class AliyunOnsAutoConfiguration {
             switch (config.getType()) {
             default:
             case NORMAL: {
-                var beanName = name + "Consumer";
                 var beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(Consumer.class, () -> ONSFactory.createConsumer(properties))
                         .setScope(BeanDefinition.SCOPE_SINGLETON).setDestroyMethodName("shutdown").getBeanDefinition();
@@ -198,7 +201,6 @@ public class AliyunOnsAutoConfiguration {
                 }
                 properties.setProperty(PropertyKeyConst.ConsumeMessageBatchMaxSize,
                         String.valueOf(consumeMessageBatchMaxSize));
-                var beanName = name + "BatchConsumer";
                 var beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(BatchConsumer.class, () -> ONSFactory.createBatchConsumer(properties))
                         .setScope(BeanDefinition.SCOPE_SINGLETON).setDestroyMethodName("shutdown").getBeanDefinition();
@@ -207,7 +209,6 @@ public class AliyunOnsAutoConfiguration {
             }
                 break;
             case ORDERED: {
-                var beanName = name + "OrderConsumer";
                 var beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(OrderConsumer.class, () -> ONSFactory.createOrderedConsumer(properties))
                         .setScope(BeanDefinition.SCOPE_SINGLETON).setDestroyMethodName("shutdown").getBeanDefinition();
@@ -227,7 +228,6 @@ public class AliyunOnsAutoConfiguration {
                     properties.setProperty(PropertyKeyConst.POLL_TIMEOUT_MILLIS,
                             String.valueOf(config.getPollTimeout().toMillis()));
                 }
-                var beanName = name + "PullConsumer";
                 var beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(PullConsumer.class, () -> ONSFactory.createPullConsumer(properties))
                         .setScope(BeanDefinition.SCOPE_SINGLETON).setDestroyMethodName("shutdown").getBeanDefinition();
