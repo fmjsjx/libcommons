@@ -1,4 +1,5 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis.LettuceAutoConfiguration,\
 com.github.fmjsjx.libcommons.spring.boot.autoconfigure.aliyunons.AliyunOnsAutoConfiguration,\
-com.github.fmjsjx.libcommons.spring.boot.autoconfigure.rocketmq.RocketMQAutoConfiguration
+com.github.fmjsjx.libcommons.spring.boot.autoconfigure.rocketmq.RocketMQAutoConfiguration,\
+com.github.fmjsjx.libcommons.spring.boot.autoconfigure.pulsar.PulsarAutoConfiguration
