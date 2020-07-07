@@ -15,6 +15,7 @@
   <modules>
     <module>libcommons-spring-boot-starter-aliyunons</module>
     <module>libcommons-spring-boot-starter-kafka</module>
+    <module>libcommons-spring-boot-starter-mongodb</module>
     <module>libcommons-spring-boot-starter-pulsar</module>
     <module>libcommons-spring-boot-starter-redis-lettuce</module>
     <module>libcommons-spring-boot-starter-rocketmq</module>
