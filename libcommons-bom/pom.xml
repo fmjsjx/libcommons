@@ -56,6 +56,16 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
+        <artifactId>libcommons-spring-boot-starter-mongodb</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>libcommons-spring-boot-starter-pulsar</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
         <artifactId>libcommons-spring-boot-starter-redis-lettuce</artifactId>
         <version>${project.version}</version>
       </dependency>
