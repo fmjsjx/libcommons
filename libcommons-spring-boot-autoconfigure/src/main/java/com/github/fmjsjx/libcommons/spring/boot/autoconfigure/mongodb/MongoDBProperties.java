@@ -446,8 +446,11 @@ public class MongoDBProperties {
         private String beanName;
         /**
          * Weather is {@code MongoDatabase} is primary or not.
+         * <p>
+         * Value {@code true} only effect when this database belongs to a primary
+         * {@code MongoClient}.
          */
-        private boolean isPrimary;
+        private boolean primary;
 
     }
 

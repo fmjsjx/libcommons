@@ -25,6 +25,13 @@ class SyncMongoClientRegistry {
         log.debug("Register sync mongo client bean definition '{}' >>> {}", beanName, beanDefinition);
         registry.registerBeanDefinition(beanName, beanDefinition);
         Optional.ofNullable(config.getDatabases()).ifPresent(dbs -> {
+            if (config.isPrimary()) {
+                if (dbs.size() == 1) {
+                    dbs.get(0).setPrimary(true);
+                }
+            } else {
+                dbs.forEach(db -> db.setPrimary(false));
+            }
             dbs.forEach(db -> {
                 var dbname = db.getName();
                 var bean = Optional.ofNullable(db.getBeanName()).orElseGet(() -> db.getId() + "MongoDatabase");
