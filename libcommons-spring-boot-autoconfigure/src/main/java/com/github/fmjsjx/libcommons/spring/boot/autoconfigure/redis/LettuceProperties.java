@@ -50,14 +50,31 @@ public class LettuceProperties {
 
         @NonNull
         private String name;
-
+        /**
+         * The REDIS URI.
+         */
         private URI uri;
-
+        /**
+         * Weather this cluster client is primary or not.
+         */
+        private boolean primary;
+        /**
+         * The host.
+         * <p>
+         * Can't be set with {@code uri}.
+         */
         private String host;
         /**
-         * Default is 6379
+         * The default is 6379
+         * <p>
+         * Can't be set with {@code uri}.
          */
         private int port = 6379;
+        /**
+         * The password to AUTH.
+         * <p>
+         * Can't be set with {@code uri}.
+         */
         private String auth;
 
     }
@@ -77,15 +94,37 @@ public class LettuceProperties {
          * or <code>"${name}RedisClusterConnection"</code> for cluster connection.
          */
         private String beanName;
-
+        /**
+         * Weather this connection is primary or not.
+         */
+        private boolean primary;
+        /**
+         * The REDIS URI.
+         */
         private URI uri;
-
+        /**
+         * The host.
+         * <p>
+         * Can't be set with {@code uri}.
+         */
         private String host;
         /**
-         * Default is 6379
+         * The default is 6379
+         * <p>
+         * Can't be set with {@code uri}.
          */
         private int port = 6379;
+        /**
+         * The default is {@code 0}.
+         * <p>
+         * Can't be set with {@code uri}.
+         */
         private int db;
+        /**
+         * The password to AUTH.
+         * <p>
+         * Can't be set with {@code uri}.
+         */
         private String auth;
 
         /**

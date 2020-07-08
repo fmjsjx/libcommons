@@ -2,10 +2,7 @@ package com.github.fmjsjx.libcommons.spring.boot.autoconfigure.redis;
 
 import java.net.URI;
 import java.util.Optional;
-import java.util.function.Supplier;
 
-import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -46,7 +43,6 @@ import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.support.AsyncConnectionPoolSupport;
 import io.lettuce.core.support.AsyncPool;
 import io.lettuce.core.support.BoundedPoolConfig;
-import io.lettuce.core.support.ConnectionPoolSupport;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -96,8 +92,14 @@ public class LettuceAutoConfiguration {
                 registerBeans((RedisClusterClientProperties) properties);
             } else {
                 RedisClient client = registerClientBean(properties);
+                if (properties.getConnections().size() == 1) {
+                    properties.getConnections().get(0).setPrimary(true);
+                }
                 for (RedisConnectionProperties connectionProperties : properties.getConnections()) {
                     registerConnectionBean(client, connectionProperties);
+                }
+                if (properties.getPools().size() == 1) {
+                    properties.getPools().get(0).setPrimary(true);
                 }
                 for (RedisPoolProperties poolProperties : properties.getPools()) {
                     registerPoolBean(client, poolProperties);
@@ -118,7 +120,7 @@ public class LettuceAutoConfiguration {
             RedisClient client = RedisClient.create(builder.build());
             clientBeanName = properties.getBeanName();
             registry.registerBeanDefinition(clientBeanName,
-                    BeanDefinitionBuilder.genericBeanDefinition(RedisClient.class, () -> client)
+                    BeanDefinitionBuilder.genericBeanDefinition(RedisClient.class, () -> client).setPrimary(true)
                             .setDestroyMethodName("shutdown").getBeanDefinition());
             return client;
         }
@@ -132,19 +134,19 @@ public class LettuceAutoConfiguration {
             if (properties.getType() == RedisConnectionType.NORMAL) {
                 BeanDefinition beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(StatefulRedisConnection.class, () -> client.connect(codec, uri))
-                        .addDependsOn(clientBeanName).getBeanDefinition();
+                        .addDependsOn(clientBeanName).setPrimary(properties.isPrimary()).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             } else if (properties.getType() == RedisConnectionType.PUBSUB) {
                 BeanDefinition beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(StatefulRedisPubSubConnection.class,
                                 () -> client.connectPubSub(codec, uri))
-                        .addDependsOn(clientBeanName).getBeanDefinition();
+                        .addDependsOn(clientBeanName).setPrimary(properties.isPrimary()).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             } else if (properties.getType() == RedisConnectionType.SENTINEL) {
                 BeanDefinition beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(StatefulRedisSentinelConnection.class,
                                 () -> client.connectSentinel(codec, uri))
-                        .addDependsOn(clientBeanName).getBeanDefinition();
+                        .addDependsOn(clientBeanName).setPrimary(properties.isPrimary()).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             }
         }
@@ -189,16 +191,11 @@ public class LettuceAutoConfiguration {
                         .genericBeanDefinition(AsyncPool.class,
                                 () -> AsyncConnectionPoolSupport
                                         .createBoundedObjectPool(() -> client.connectAsync(codec, uri), config))
-                        .addDependsOn(clientBeanName).getBeanDefinition();
+                        .addDependsOn(clientBeanName).setPrimary(properties.isPrimary()).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             } else {
-                Supplier<StatefulRedisConnection<?, ?>> connectionSupplier = () -> client.connect(codec, uri);
-                GenericObjectPoolConfig<StatefulRedisConnection<?, ?>> config = buildGenericPoolConfig(properties);
-                BeanDefinition beanDefinition = BeanDefinitionBuilder
-                        .genericBeanDefinition(GenericObjectPool.class,
-                                () -> ConnectionPoolSupport.createGenericObjectPool(connectionSupplier, config))
-                        .setDestroyMethodName("close").addDependsOn(clientBeanName).getBeanDefinition();
-                registry.registerBeanDefinition(beanName, beanDefinition);
+                GenericPoolRegistry.registerGenericPoolBean(registry, clientBeanName, client, properties, beanName, uri,
+                        codec);
             }
         }
 
@@ -217,21 +214,6 @@ public class LettuceAutoConfiguration {
             return config;
         }
 
-        private static final GenericObjectPoolConfig<StatefulRedisConnection<?, ?>> buildGenericPoolConfig(
-                RedisPoolProperties properties) {
-            GenericObjectPoolConfig<StatefulRedisConnection<?, ?>> config = new GenericObjectPoolConfig<>();
-            if (properties.getMaxTotal() > 0) {
-                config.setMaxTotal(properties.getMaxTotal());
-            }
-            if (properties.getMaxIdle() > 0) {
-                config.setMaxIdle(properties.getMaxIdle());
-            }
-            if (properties.getMinIdle() > 0) {
-                config.setMinIdle(properties.getMinIdle());
-            }
-            return config;
-        }
-
         private void registerBeans(RedisClusterClientProperties properties) {
             ClientResources.Builder builder = ClientResources.builder();
             if (properties.getIoThreads() > 0) {
@@ -246,7 +228,10 @@ public class LettuceAutoConfiguration {
             RedisClusterClient client = RedisClusterClient.create(builder.build(), uri);
             registry.registerBeanDefinition(beanName,
                     BeanDefinitionBuilder.genericBeanDefinition(RedisClusterClient.class, () -> client)
-                            .setDestroyMethodName("shutdown").getBeanDefinition());
+                            .setDestroyMethodName("shutdown").setPrimary(properties.isPrimary()).getBeanDefinition());
+            if (properties.getConnections().size() == 1) {
+                properties.getConnections().get(0).setPrimary(true);
+            }
             for (RedisConnectionProperties connectionProperties : properties.getConnections()) {
                 registerConnectionBean(beanName, client, connectionProperties);
             }
@@ -272,13 +257,13 @@ public class LettuceAutoConfiguration {
             if (properties.getType() == RedisConnectionType.NORMAL) {
                 BeanDefinition beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(StatefulRedisClusterConnection.class, () -> client.connect(codec))
-                        .addDependsOn(clientBeanName).getBeanDefinition();
+                        .addDependsOn(clientBeanName).setPrimary(properties.isPrimary()).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             } else if (properties.getType() == RedisConnectionType.PUBSUB) {
                 BeanDefinition beanDefinition = BeanDefinitionBuilder
                         .genericBeanDefinition(StatefulRedisClusterPubSubConnection.class,
                                 () -> client.connectPubSub(codec))
-                        .addDependsOn(clientBeanName).getBeanDefinition();
+                        .addDependsOn(clientBeanName).setPrimary(properties.isPrimary()).getBeanDefinition();
                 registry.registerBeanDefinition(beanName, beanDefinition);
             } else if (properties.getType() == RedisConnectionType.SENTINEL) {
                 throw new IllegalArgumentException("SENTINEL is unsupported in RedisCluster");
