@@ -20,7 +20,7 @@ import lombok.ToString;
 /**
  * Configuration properties class for MongoDB.
  * 
- * @since 1.0
+ * @since 0.1
  *
  * @author MJ Fang
  */
@@ -38,7 +38,7 @@ public class MongoDBProperties {
     /**
      * MongoDB driver type.
      * 
-     * @since 1.0
+     * @since 0.1
      *
      * @author MJ Fang
      */
@@ -56,7 +56,7 @@ public class MongoDBProperties {
     /**
      * Configuration properties class for {@code MongoClient}.
      * 
-     * @since 1.0
+     * @since 0.1
      *
      * @author MJ Fang
      */
@@ -199,12 +199,17 @@ public class MongoDBProperties {
          * The compressor list.
          */
         private List<CompressorProperties> compressorList;
+        /**
+         * The database list.
+         */
+        private List<DatabaseProperties> databases;
+
     }
 
     /**
      * Configuration properties class for MongoDB server.
      * 
-     * @since 1.0
+     * @since 0.1
      *
      * @author MJ Fang
      */
@@ -236,7 +241,7 @@ public class MongoDBProperties {
     /**
      * Configuration properties class for MongoDB connection pool.
      * 
-     * @since 1.0
+     * @since 0.1
      *
      * @author MJ Fang
      */
@@ -289,7 +294,7 @@ public class MongoDBProperties {
     /**
      * Configuration properties class for MongoDB connection socket.
      * 
-     * @since 1.0
+     * @since 0.1
      *
      * @author MJ Fang
      */
@@ -320,7 +325,7 @@ public class MongoDBProperties {
     /**
      * Configuration properties class for MongoDB connection SSL.
      * 
-     * @since 1.0
+     * @since 0.1
      *
      * @author MJ Fang
      */
@@ -346,7 +351,7 @@ public class MongoDBProperties {
     /**
      * Configuration properties class for MongoDB compressor.
      * 
-     * @since 1.0
+     * @since 0.1
      *
      * @author MJ Fang
      */
@@ -395,7 +400,7 @@ public class MongoDBProperties {
     /**
      * MongoDB compression algorithms.
      * 
-     * @since 1.0
+     * @since 0.1
      *
      * @author MJ Fang
      */
@@ -412,6 +417,38 @@ public class MongoDBProperties {
          * {@code zstd}.
          */
         ZSTD
+    }
+
+    /**
+     * Configuration properties for {@code MongoDatabse}s.
+     * 
+     * @since 0.1
+     *
+     * @author MJ Fang
+     */
+    @Getter
+    @Setter
+    @ToString
+    public static class DatabaseProperties {
+        /**
+         * The name of the database.
+         */
+        @NonNull
+        private String name;
+        /**
+         * The id of the {@code MongoDatabase} instance.
+         */
+        @NonNull
+        private String id;
+        /**
+         * The default is <code>"${id}MongoDatabase"</code>;
+         */
+        private String beanName;
+        /**
+         * Weather is {@code MongoDatabase} is primary or not.
+         */
+        private boolean isPrimary;
+
     }
 
 }

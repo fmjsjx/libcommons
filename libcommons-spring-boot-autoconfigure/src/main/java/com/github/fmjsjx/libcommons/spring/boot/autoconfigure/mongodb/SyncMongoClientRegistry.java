@@ -10,6 +10,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.mongodb.MongoDBProperties.MongoClientProperties;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,8 +22,19 @@ class SyncMongoClientRegistry {
         var beanName = Optional.ofNullable(config.getBeanName()).orElseGet(() -> name + "MongoClient");
         var beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(MongoClient.class, beanFactory(config))
                 .setScope(BeanDefinition.SCOPE_SINGLETON).setPrimary(config.isPrimary()).getBeanDefinition();
-        log.debug("Register sync mongo client bean definition \"{}\" >>> {}", beanName, beanDefinition);
+        log.debug("Register sync mongo client bean definition '{}' >>> {}", beanName, beanDefinition);
         registry.registerBeanDefinition(beanName, beanDefinition);
+        Optional.ofNullable(config.getDatabases()).ifPresent(dbs -> {
+            dbs.forEach(db -> {
+                var dbname = db.getName();
+                var bean = Optional.ofNullable(db.getBeanName()).orElseGet(() -> db.getId() + "MongoDatabase");
+                var definition = BeanDefinitionBuilder.genericBeanDefinition(MongoDatabase.class)
+                        .setFactoryMethodOnBean("getDatabase", beanName).addConstructorArgValue(dbname)
+                        .setScope(BeanDefinition.SCOPE_SINGLETON).setPrimary(db.isPrimary()).getBeanDefinition();
+                log.debug("Register sync mongo database bean definition '{}' >>> {}", beanName, definition);
+                registry.registerBeanDefinition(bean, definition);
+            });
+        });
     }
 
     private static final Supplier<MongoClient> beanFactory(MongoClientProperties config) {
