@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
-com.github.fmjsjx.libcommons.spring.boot.autoconfigure.AutoConfigurationExclusionFilter
+com.github.fmjsjx.libcommons.spring.boot.autoconfigure.mongodb.MongoDBAutoConfigurationExclusionFilter

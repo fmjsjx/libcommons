@@ -31,7 +31,7 @@
     <log4j2.version>2.13.3</log4j2.version>
     <lombok.version>1.18.12</lombok.version>
     <netty.version>4.1.50.Final</netty.version>
-    <netty-tcnative.version>2.0.30.Final</netty-tcnative.version>
+    <netty-tcnative.version>2.0.31.Final</netty-tcnative.version>
     <dsl-json.version>1.9.5</dsl-json.version>
     <jackson.version>2.11.0</jackson.version>
     <jsoniter.version>0.9.23</jsoniter.version>
@@ -109,6 +109,19 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-tcnative</artifactId>
+        <classifier>linux-x86_64</classifier>
+        <version>${netty-tcnative.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-tcnative</artifactId>
+        <classifier>osx-x86_64</classifier>
+        <version>${netty-tcnative.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-tcnative</artifactId>
+        <classifier>windows-x86_64</classifier>
         <version>${netty-tcnative.version}</version>
       </dependency>
       <dependency>

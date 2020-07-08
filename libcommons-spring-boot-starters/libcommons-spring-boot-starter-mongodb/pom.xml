@@ -33,19 +33,16 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-tcnative</artifactId>
-      <version>${netty-tcnative.version}</version>
       <classifier>osx-x86_64</classifier>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-tcnative</artifactId>
-      <version>${netty-tcnative.version}</version>
       <classifier>linux-x86_64</classifier>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-tcnative</artifactId>
-      <version>${netty-tcnative.version}</version>
       <classifier>windows-x86_64</classifier>
     </dependency>
   </dependencies>
