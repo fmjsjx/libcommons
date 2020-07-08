@@ -71,12 +71,20 @@ public class MongoDBProperties {
          * The default is <code>"${name}MongoClient"</code>.
          */
         private String beanName;
-
+        /**
+         * Weather this client is primary or not.
+         */
+        private boolean primary;
         /**
          * The default is {@code sync}.
          */
         private DriverType driver = DriverType.SYNC;
-
+        /**
+         * Weather this client will use {@code NETTY} stream or not.
+         * <p>
+         * The default is {@code true}.
+         */
+        private boolean useNetty = true;
         /**
          * The string value of MongoDB Connection String.
          */

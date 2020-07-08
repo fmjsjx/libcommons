@@ -175,6 +175,17 @@
       <!-- Apache RocketMQ -->
       <dependency>
         <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-remoting</artifactId>
+        <version>${rocketmq.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.rocketmq</groupId>
         <artifactId>rocketmq-all</artifactId>
         <version>${rocketmq.version}</version>
         <type>pom</type>

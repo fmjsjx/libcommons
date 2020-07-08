@@ -25,6 +25,10 @@
       <artifactId>libcommons-util-rocketmq</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-handler</artifactId>
+    </dependency>
   </dependencies>
 
 </project>

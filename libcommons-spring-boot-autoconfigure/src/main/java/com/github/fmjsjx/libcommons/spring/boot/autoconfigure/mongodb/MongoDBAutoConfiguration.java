@@ -1,5 +1,6 @@
 package com.github.fmjsjx.libcommons.spring.boot.autoconfigure.mongodb;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -17,12 +18,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.mongodb.MongoDBProperties.CompressorProperties;
+import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.mongodb.MongoDBProperties.DriverType;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.mongodb.MongoDBProperties.MongoClientProperties;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.mongodb.MongoDBProperties.PoolProperties;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.mongodb.MongoDBProperties.ServerHost;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.mongodb.MongoDBProperties.SocketProperties;
 import com.github.fmjsjx.libcommons.spring.boot.autoconfigure.mongodb.MongoDBProperties.SslProperties;
 import com.mongodb.AuthenticationMechanism;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.connection.ClusterSettings;
@@ -30,7 +33,26 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.kqueue.KQueue;
+import io.netty.channel.kqueue.KQueueEventLoopGroup;
+import io.netty.channel.kqueue.KQueueSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Configuration
 @ConditionalOnClass(MongoClientSettings.class)
 @EnableConfigurationProperties(MongoDBProperties.class)
@@ -39,6 +61,40 @@ public class MongoDBAutoConfiguration {
     @Bean
     public static MongoDBRegisteryProcessor mongodbRegisteryProcessor() {
         return new MongoDBRegisteryProcessor();
+    }
+
+    private static final Object NETTY_LIBRARY_LOCK = new Object();
+    private static volatile NettyLibrary nettyLibrary;
+
+    static NettyLibrary getNettyLibrary() {
+        if (nettyLibrary == null) {
+            synchronized (NETTY_LIBRARY_LOCK) {
+                if (nettyLibrary == null) {
+                    var threadFactory = new DefaultThreadFactory("mongodb-stream", true);
+                    if (Epoll.isAvailable()) {
+                        nettyLibrary = new NettyLibrary(new EpollEventLoopGroup(threadFactory),
+                                EpollSocketChannel.class);
+                    } else if (KQueue.isAvailable()) {
+                        nettyLibrary = new NettyLibrary(new KQueueEventLoopGroup(threadFactory),
+                                KQueueSocketChannel.class);
+                    } else {
+                        nettyLibrary = new NettyLibrary(new NioEventLoopGroup(threadFactory), NioSocketChannel.class);
+                    }
+                }
+            }
+        }
+        return nettyLibrary;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    @RequiredArgsConstructor
+    static class NettyLibrary {
+
+        private final EventLoopGroup eventLoopGroup;
+        private final Class<? extends SocketChannel> socketChannelClass;
+
     }
 
     public static class MongoDBRegisteryProcessor implements EnvironmentAware, BeanDefinitionRegistryPostProcessor {
@@ -61,49 +117,73 @@ public class MongoDBAutoConfiguration {
             this.registry = registry;
             var bindResult = Binder.get(environment).bind("libcommons.mongodb", MongoDBProperties.class);
             if (bindResult.isBound()) {
-                Optional.ofNullable(bindResult.get().getClients())
-                        .ifPresent(clients -> clients.forEach(this::registerClient));
+                Optional.ofNullable(bindResult.get().getClients()).ifPresent(this::registerClients);
             }
         }
 
-        private void registerClient(MongoClientProperties config) {
-            switch (config.getDriver()) {
-            case SYNC:
-                SyncMongoClientRegistry.register(registry, config);
-                break;
-            case REACTIVESTREAMS:
-                ReactivestreamsMongoClientRegistry.register(registry, config);
-                break;
+        private void registerClients(List<MongoClientProperties> clients) {
+            var groups = clients.stream().collect(Collectors.groupingBy(MongoClientProperties::getDriver));
+            var syncGroup = groups.get(DriverType.SYNC);
+            if (syncGroup != null) {
+                if (syncGroup.size() == 1) {
+                    syncGroup.get(0).setPrimary(true);
+                }
+                syncGroup.forEach(config -> {
+                    log.debug("Register sync client >>> {}", config);
+                    SyncMongoClientRegistry.register(registry, config);
+                });
+            }
+            var reactivestreamsGroup = groups.get(DriverType.REACTIVESTREAMS);
+            if (reactivestreamsGroup != null) {
+                if (reactivestreamsGroup.size() == 1) {
+                    reactivestreamsGroup.get(0).setPrimary(true);
+                }
+                reactivestreamsGroup.forEach(config -> {
+                    log.debug("Register reactivestreams client >>> {}", config);
+                    ReactivestreamsMongoClientRegistry.register(registry, config);
+                });
             }
         }
-
     }
 
 }
 
+@Slf4j
 class MongoClientSettingsFactory {
 
     static MongoClientSettings create(MongoClientProperties config) {
-        var builder = MongoClientSettings.builder() // builder
-                .applyToClusterSettings(b -> apply(b, config)) // cluster
-                .applyToConnectionPoolSettings(b -> apply(b, config.getPool())) // pool
-                .applyToServerSettings(b -> apply(b, config)) // server
-                .applyToSocketSettings(b -> apply(b, config.getSocket())) // socket
-                .applyToSslSettings(b -> apply(b, config.getSsl())); // SSL
-        // compressor list
-        Optional.ofNullable(config.getCompressorList()).filter(l -> l.size() > 0).ifPresent(list -> {
-            builder.compressorList(
-                    list.stream().map(CompressorProperties::toMongoCompressor).collect(Collectors.toList()));
-        });
-        // credential
-        var mechanism = config.getAuthMechanism();
-        var userName = config.getUsername();
-        var source = Optional.ofNullable(config.getAuthdb()).orElse("admin");
-        var password = config.getPassword();
-        if (userName != null) {
-            builder.credential(createCredential(mechanism, userName, source, password));
-        } else if (mechanism != null) {
-            builder.credential(createCredential(mechanism, userName, source, password));
+        var builder = MongoClientSettings.builder();
+        if (config.getUri() != null) {
+            builder.applyConnectionString(new ConnectionString(config.getUri()));
+        } else {
+            builder.applyToClusterSettings(b -> apply(b, config)) // cluster
+                    .applyToConnectionPoolSettings(b -> apply(b, config.getPool())) // pool
+                    .applyToServerSettings(b -> apply(b, config)) // server
+                    .applyToSocketSettings(b -> apply(b, config.getSocket())) // socket
+                    .applyToSslSettings(b -> apply(b, config.getSsl())); // SSL
+            // compressor list
+            Optional.ofNullable(config.getCompressorList()).filter(l -> l.size() > 0).ifPresent(list -> {
+                var cl = list.stream().map(CompressorProperties::toMongoCompressor).collect(Collectors.toList());
+                log.debug("Set compressor list >>> {}", cl);
+                builder.compressorList(cl);
+            });
+            // credential
+            var mechanism = config.getAuthMechanism();
+            var userName = config.getUsername();
+            var source = Optional.ofNullable(config.getAuthdb()).orElse("admin");
+            var password = config.getPassword();
+            if (userName != null) {
+                builder.credential(createCredential(mechanism, userName, source, password));
+            } else if (mechanism != null) {
+                builder.credential(createCredential(mechanism, userName, source, password));
+            }
+        }
+        if (config.isUseNetty()) {
+            var library = MongoDBAutoConfiguration.getNettyLibrary();
+            var sff = NettyStreamFactoryFactory.builder().eventLoopGroup(library.getEventLoopGroup())
+                    .socketChannelClass(library.getSocketChannelClass()).build();
+            log.debug("Set MongoClient NettyStreamFactoryFactory >>> {}", sff);
+            builder.streamFactoryFactory(sff);
         }
         return builder.build();
     }
