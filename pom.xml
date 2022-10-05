@@ -41,7 +41,7 @@
     <kafka.version>2.5.0</kafka.version>
     <aliyun-ons.version>1.8.6.Final</aliyun-ons.version>
     <rocketmq.version>4.7.1</rocketmq.version>
-    <pulsar.version>2.6.0</pulsar.version>
+    <pulsar.version>2.7.5</pulsar.version>
   </properties>
 
   <repositories>
